@@ -3,10 +3,7 @@ package machine;
 import java.util.Scanner;
 
 public class CoffeeMachine {
-    // private static final int waterOneCup = 200; //ml
-    // private static final int milkOneCup = 50; //ml
-    // private static final int beansOneCup = 15; //g
-    private static int amountOfWater = 1200;
+    private static int amountOfWater = 400;
     private static int amountOfMilk = 540;
     private static int amountOfBeans = 120;
     private static int amountOfCups = 9;
@@ -29,11 +26,10 @@ public class CoffeeMachine {
 
         // countIngredients(scn.nextInt());
 
-        printStatus();
-        String action = askAction();
-        doAction(action);
-        printStatus();
-
+        while (true) {
+            String action = askAction();
+            doAction(action);
+        }
     }
 
     private static void printStatus() {
@@ -42,7 +38,7 @@ public class CoffeeMachine {
                 "%d of milk\n" +
                 "%d of coffee beans\n" +
                 "%d of disposable cups\n" +
-                "%d of money\n", amountOfWater, amountOfMilk, amountOfBeans, amountOfCups, amountOfMoney);
+                "$%d of money\n", amountOfWater, amountOfMilk, amountOfBeans, amountOfCups, amountOfMoney);
     }
 
    /* public static void checkIfEnoughIngredientsToMakeSpecifiedAmountOfCups(int cups) {
@@ -79,9 +75,19 @@ public class CoffeeMachine {
     }*/
 
     private static String askAction() {
-        System.out.println("Write action (buy, fill, take):");
-        String chosenAction = scn.next();
-        return chosenAction;
+        while (true) {
+            System.out.println("Write action (buy, fill, take, remaining, exit):");
+            String chosenAction = scn.next();
+            if (chosenAction.equalsIgnoreCase("buy")
+                    || chosenAction.equalsIgnoreCase("fill")
+                    || chosenAction.equalsIgnoreCase("take")
+                    || chosenAction.equalsIgnoreCase("remaining")
+                    || chosenAction.equalsIgnoreCase("exit")) {
+                return chosenAction;
+            } else {
+                System.out.println("Not a valid action, try again.");
+            }
+        }
     }
 
     private static void doAction(String action) {
@@ -95,39 +101,64 @@ public class CoffeeMachine {
             case "take":
                 giveMoney();
                 break;
+            case "remaining":
+                printStatus();
+                break;
+            case "exit":
+                System.exit(0);
         }
     }
 
-    private static void sellBeverage() {
-        System.out.println("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino:");
-        int choice = scn.nextInt();
-        /*if (!(choice >= 1 && choice <= 3)) {
-            return;
-        }*/
-        switch (choice) {
-            case 1:
-                amountOfWater -= 250;
-                amountOfBeans -= 16;
-                amountOfMoney += 4;
-                break;
-            case 2:
-                amountOfWater -= 350;
-                amountOfMilk -= 75;
-                amountOfBeans -= 20;
-                amountOfMoney += 7;
-                break;
-            case 3:
-                amountOfWater -= 200;
-                amountOfMilk -= 100;
-                amountOfBeans -= 12;
-                amountOfMoney += 6;
-                break;
-            default:
-                System.out.println("Wrong answer. Acceptable answer is: 1, 2, 3");
-                return;
-
+    private static boolean checkIfEnoughIngredients(Beverages beverage) {
+        if (amountOfWater - beverage.getWater() < 0) {
+            System.out.println("Sorry, not enough water!");
+            return false;
+        } else if (amountOfMilk - beverage.getMilk() < 0) {
+            System.out.println("Sorry, not enough milk!");
+            return false;
+        } else if (amountOfBeans - beverage.getBeans() < 0) {
+            System.out.println("Sorry, not enough beans!");
+            return false;
+        } else if (amountOfCups == 0) {
+            System.out.println("Sorry, not enough cups!");
+            return false;
+        } else {
+            return true;
         }
+    }
+
+    private static void makeBeverage(Beverages beverage) {
+        amountOfWater -= beverage.getWater();
+        amountOfMilk -= beverage.getMilk();
+        amountOfBeans -= beverage.getBeans();
         amountOfCups--;
+        amountOfMoney += beverage.getPrice();
+        System.out.println("I have enough resources, making you a coffee!");
+    }
+
+    private static void sellBeverage() {
+        Beverages beverage;
+        while (true) {
+            System.out.println("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino, back - to main menu:");
+            String choice = scn.next();
+            if (choice.equalsIgnoreCase("back")) {
+                return;
+            }
+            beverage = Beverages.getBeverage(choice);
+            if (beverage == null) {
+                System.out.println("Wrong answer, try again.");
+                continue;
+            } else {
+                break;
+            }
+        }
+        boolean enough = checkIfEnoughIngredients(beverage);
+        if (enough) {
+            makeBeverage(beverage);
+        } else {
+            return;
+        }
+
     }
 
     private static void fillMachine() {
